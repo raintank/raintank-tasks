@@ -63,9 +63,9 @@ func main() {
 	// Still parse globalconf, though, even if the config file doesn't exist
 	// because we want to be able to use environment variables.
 	conf, err := globalconf.NewWithOptions(&globalconf.Options{
-		Filename: cfile,
+		Filename:  cfile,
 		EnvPrefix: "TSDB_",
-		})
+	})
 	if err != nil {
 		panic(fmt.Sprintf("error with configuration file: %s", err))
 	}
