@@ -55,13 +55,21 @@ func main() {
 	flag.Parse()
 
 	// Only try and parse the conf file if it exists
+	var cfile string
 	if _, err := os.Stat(*confFile); err == nil {
-		conf, err := globalconf.NewWithOptions(&globalconf.Options{Filename: *confFile})
-		if err != nil {
-			panic(fmt.Sprintf("error with configuration file: %s", err))
-		}
-		conf.ParseAll()
+		cfile = *confFile
 	}
+
+	// Still parse globalconf, though, even if the config file doesn't exist
+	// because we want to be able to use environment variables.
+	conf, err := globalconf.NewWithOptions(&globalconf.Options{
+		Filename: cfile,
+		EnvPrefix: "TSDB_",
+		})
+	if err != nil {
+		panic(fmt.Sprintf("error with configuration file: %s", err))
+	}
+	conf.ParseAll()
 
 	log.NewLogger(0, "console", fmt.Sprintf(`{"level": %d, "formatting":true}`, *logLevel))
 	// workaround for https://github.com/grafana/grafana/issues/4055
