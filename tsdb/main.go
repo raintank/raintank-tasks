@@ -54,7 +54,10 @@ var (
 func main() {
 	flag.Parse()
 
-	// Only try and parse the conf file if it exists
+	// Set 'cfile' here if *confFile exists, because we should only try and
+	// parse the conf file if it exists. If we try and parse the default
+	// conf file location when it's not there, we (unsurprisingly) get a
+	// panic.
 	var cfile string
 	if _, err := os.Stat(*confFile); err == nil {
 		cfile = *confFile
