@@ -55,8 +55,8 @@ func main() {
 	flag.Parse()
 
 	// Set 'cfile' here if *confFile exists, because we should only try and
-	// parse the conf file below in that case. If we try and parse the 
-	// default conf file location when it's not there, we (unsurprisingly) 
+	// parse the conf file below in that case. If we try and parse the
+	// default conf file location when it's not there, we (unsurprisingly)
 	// get a panic. We still need to initialize a globalconf object,
 	// however, to be able to use environment variables to set configuration
 	// items.
