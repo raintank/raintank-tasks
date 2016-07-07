@@ -54,14 +54,26 @@ var (
 func main() {
 	flag.Parse()
 
-	// Only try and parse the conf file if it exists
+	// Set 'cfile' here if *confFile exists, because we should only try and
+	// parse the conf file below in that case. If we try and parse the
+	// default conf file location when it's not there, we (unsurprisingly)
+	// get a panic. We still need to initialize a globalconf object,
+	// however, to be able to use environment variables to set configuration
+	// items.
+
+	var cfile string
 	if _, err := os.Stat(*confFile); err == nil {
-		conf, err := globalconf.NewWithOptions(&globalconf.Options{Filename: *confFile})
-		if err != nil {
-			panic(fmt.Sprintf("error with configuration file: %s", err))
-		}
-		conf.ParseAll()
+		cfile = *confFile
 	}
+
+	conf, err := globalconf.NewWithOptions(&globalconf.Options{
+		Filename:  cfile,
+		EnvPrefix: "TSDB_",
+	})
+	if err != nil {
+		panic(fmt.Sprintf("error with configuration file: %s", err))
+	}
+	conf.ParseAll()
 
 	log.NewLogger(0, "console", fmt.Sprintf(`{"level": %d, "formatting":true}`, *logLevel))
 	// workaround for https://github.com/grafana/grafana/issues/4055
