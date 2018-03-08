@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/raintank/raintank-apps/task-server/api/rbody"
 	"github.com/raintank/raintank-apps/task-server/model"
@@ -27,6 +28,13 @@ func GetTaskById(ctx *Context) {
 
 func GetTasks(ctx *Context, query model.GetTasksQuery) {
 	query.OrgId = ctx.OrgId
+
+	// added for backwards compatibility.
+	// if the user is looking for tasks for a specific metric type
+	// translate that to a task with a specific type
+	if query.Metric != "" {
+		query.TaskType = strings.TrimRight(query.Metric, "/*")
+	}
 	tasks, err := sqlstore.GetTasks(&query)
 	if err != nil {
 		log.Error(3, err.Error())
