@@ -3,6 +3,8 @@ package migrations
 import (
 	"fmt"
 
+	"github.com/go-xorm/xorm"
+	"github.com/raintank/raintank-apps/task-server/model"
 	"github.com/raintank/worldping-api/pkg/services/sqlstore/migrator"
 )
 
@@ -29,4 +31,33 @@ func addTaskMigrations(mg *migrator.Migrator) {
 		migrationId := fmt.Sprintf("create index %s - %s", index.XName(taskV1.Name), "v1")
 		mg.AddMigration(migrationId, migrator.NewAddIndexMigration(taskV1, index))
 	}
+	// add task type
+	migration := migrator.NewAddColumnMigration(taskV1, &migrator.Column{
+		Name: "task_type", Type: migrator.DB_NVarchar, Length: 255, Nullable: true,
+	})
+	migration.OnSuccess = func(sess *xorm.Session) error {
+		// iterate over every task, and copy the config map key to be the taskType.
+		sess.Table("task")
+		var t []*model.Task
+		err := sess.Find(&t)
+		if err != nil {
+			return err
+		}
+		for _, task := range t {
+			keys := make([]string, 0)
+			for k, v := range task.Config {
+				keys = append(keys, k)
+			}
+			if len(keys) > 0 {
+				task.TaskType = keys[0]
+			}
+			_, err := sess.Id(task.Id).Update(&task)
+			if err != nil {
+				return err
+			}
+		}
+
+		return err
+	}
+	mg.AddMigration("task add taskType field", migration)
 }

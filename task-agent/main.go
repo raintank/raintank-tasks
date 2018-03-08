@@ -157,9 +157,6 @@ func main() {
 
 	go sess.Start()
 
-	//periodically send an Updated Catalog.
-	go SendCatalog(sess, snapClient, shutdownStart)
-
 	// connect to the snap server and monitor that it is up.
 	go snapClient.Run()
 
@@ -169,37 +166,4 @@ func main() {
 	close(shutdownStart)
 	sess.Close()
 	return
-}
-
-func SendCatalog(sess *session.Session, snapClient *snap.Client, shutdownStart chan struct{}) {
-	ticker := time.NewTicker(time.Minute * 5)
-	for {
-		select {
-		case <-shutdownStart:
-			return
-		case <-ticker.C:
-			emitMetrics(sess, snapClient)
-		case <-snapClient.ConnectChan:
-			log.Debug("connected to SNAP. re-indexing task list")
-			if err := GlobalTaskCache.IndexSnapTasks(); err != nil {
-				log.Error(3, "failed to add task to cache. %s", err)
-			}
-			emitMetrics(sess, snapClient)
-		}
-	}
-}
-
-func emitMetrics(sess *session.Session, snapClient *snap.Client) {
-	catalog, err := snapClient.GetSnapMetrics()
-	if err != nil {
-		log.Error(3, err.Error())
-		return
-	}
-	body, err := json.Marshal(catalog)
-	if err != nil {
-		log.Error(3, err.Error())
-		return
-	}
-	e := &message.Event{Event: "catalog", Payload: body}
-	sess.Emit(e)
 }
